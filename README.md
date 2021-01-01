@@ -3,3 +3,7 @@ this code is achieve the 3D hot network model for prediction brain age， includ
 White matter and CSF or raw image  as the input data.And we test the model on 2000+ sample , the age range from 8 to 90 years.
 ## Result
 - SFCN
+- 3D ResNet
+- Resnet
+- 3D CNN
+
