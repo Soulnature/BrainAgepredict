@@ -23,7 +23,7 @@ def split_dataset(csv_object):
 
     for i in scanner_index:
         one_set = csv_object[(csv_object['Scanner'] == i)]
-        train_data, test_data = train_test_split(one_set, test_size=0.2, random_state=0)
+        train_data, test_data = train_test_split(one_set, test_size=0.3, random_state=0)
         train_cat = pd.concat([train_cat, train_data], axis=0)
         val_cat = pd.concat([val_cat, test_data])
     return train_cat, val_cat
@@ -69,7 +69,7 @@ def main(root_dir, network_type, con_st,DOMAIN_L,model_name,base,epoches,batch_s
     data = pd.read_csv(root_dir)
    # data=data[0:3000]
     train_d, test_set = split_dataset(data)
-    test_d, test_e = train_test_split(test_set, test_size=0.5, random_state=0)
+    test_d, test_e = train_test_split(test_set, test_size=0.33, random_state=0)
 
     train_dataset = image_domian_gender(train_d['Loc'].values, train_d['Gender'].values, train_d['Scanner'].values, train_d['Age'].values)
     val_dataset = image_domian_gender(test_d['Loc'].values, test_d['Gender'].values, test_d['Scanner'].values, test_d['Age'].values)
