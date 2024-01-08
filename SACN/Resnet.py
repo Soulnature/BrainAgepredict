@@ -135,7 +135,7 @@ class ResNet(nn.Module):
             elif isinstance(m, nn.BatchNorm3d):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
-
+        
     def _make_layer(self, block, planes, blocks, stride=1):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
@@ -196,10 +196,9 @@ def resnet152(**kwargs):
     """
     model = ResNet(Bottleneck, [3, 8, 36, 3], **kwargs)
     return model
-
-class Age_regression(nn.Module):
+class Age_regression_re(nn.Module):
     def __init__(self, channel_number=[32, 64, 128, 256, 256, 128], output_dim=90, dropout=True):
-        super(Age_regression, self).__init__()
+        super(Age_regression_re, self).__init__()
         n_layer = len(channel_number)
         ##define the age classification model (1) regresison model (2) classification model #
         self.age_regression = nn.Sequential()
@@ -211,43 +210,45 @@ class Age_regression(nn.Module):
         in_channel = 2048
         self.age_regression.add_module('conv_%d' % i,
                                    nn.Conv3d(in_channel,output_dim, padding=0, kernel_size=1))
+        self.agemae=Age_mae()
 
     def forward(self, x):
-        # out = list()
         x_out = self.age_regression(x)
+        y=self.agemae(x)
         x = F.log_softmax(x_out, dim=1)
-        # out.append(x)
-        return x
+        return x,y
+
+
 class Age_mae(nn.Module):
     def __init__(self):
         super(Age_mae,self).__init__()
         self.fn=nn.Flatten()
         self.fc1 = nn.Linear(2048*8, 512)
-        self.fc2 = nn.Linear(512, 1)
-       # self.fc3 = nn.Linear(64, 1)
+        self.fc2 = nn.Linear(512, 64)
+        self.fc3 = nn.Linear(64, 1)
     def forward(self, x):
         x = self.fn(x)
         x=F.relu(self.fc1(F.dropout(x)))
         x=F.relu(self.fc2(x))
-     #   out=self.fc3(x)
-        return x
-class Gende_net(nn.Module):
+        out=self.fc3(x)
+        return out
+class Gende_net_re(nn.Module):
     def __init__(self):
-        super(Gende_net,self).__init__()
+        super(Gende_net_re,self).__init__()
         self.fc1 = nn.Linear(2048*8, 128)
         self.fc2 = nn.Linear(128, 64)
         self.fc3 = nn.Linear(64, 2)
-    def forward(self, x,constant):
+    def forward(self,x,constant):
         x = x.view(-1, 2048*8)
         x = GradReverse.grad_reverse(x, constant)
         x=F.relu(self.fc1(F.dropout(x)))
         x=F.relu(self.fc2(x))
         out=F.log_softmax(self.fc3(x))
         return out
-class Domain_classifier(nn.Module):
+class Domain_classifier_re(nn.Module):
 
     def __init__(self, domain_num):
-        super(Domain_classifier, self).__init__()  ## for the domian adaption and updata the gradient
+        super(Domain_classifier_re, self).__init__()  ## for the domian adaption and updata the gradient
         self.fc1 = nn.Linear(2048*8, 128)
         self.fc3 = nn.Linear(128, domain_num)
     def forward(self, x, constant):

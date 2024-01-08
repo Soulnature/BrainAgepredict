@@ -93,9 +93,9 @@ def get_data(label_files,disorder_fea,normal_fea,taskname):
         y_train = np.hstack((disorder_label, normal_label))
     return x_train,y_train
 if __name__=='__main__':
-    label_files='F:/复旦/brainAge/domain_age/AD/AD_data_input_unsweed.csv'
-    disorder_fea='F:/复旦/brainAge/domain_age/AD/AD_input_fea.npy'
-    normal_fea='F:/复旦/brainAge/domain_age/AD/AD_nor_fea.npy'
+    label_files='/AD_data_input_unsweed.csv'
+    disorder_fea='/AD_input_fea.npy'
+    normal_fea='/AD_nor_fea.npy'
     train_x,train_y=get_data(label_files,disorder_fea,normal_fea,'AD')
     model_data=SVM_model(train_x,train_y,10)
     score_metrics=model_data.svm_cross_validation()

@@ -217,7 +217,7 @@ AD_sample_data_iner<-AD_sample_data[as.character(inter_name),]
 
 
 ##
-#### 回归图 ##
+#### regression plot  ##
 group_data<-c(rep('MAG',nrow(all_methlation_age_data)),rep('BAG',nrow(AD_sample_data_iner)))
 ####  adjust the brain age #
 adjust_fun_age<-function(brain_age){
@@ -267,8 +267,6 @@ ggboxplot(data_fram_lan, x = "x", y = "methylation",
   stat_compare_means(label.y = 50)+     # Add global p-value
   theme(title=element_text(,size=20))+xlab('Group')+ylab('BAG_real')
 ##
-graph2ppt(file='ADNI.pptx',width=8,height=6,append=TRUE)
-p<- ggplot(data_fram_lan,aes(x=x,y=methylation,fill=x))+geom_boxplot()
-######## using the 
+
 
 

@@ -8,7 +8,7 @@ library(export)
 library(stringi)
 library(stringr)
 library(RColorBrewer)
-ying_expression<-fread('F:/复旦/合作/yang/promoter_expression/brain_development_RPKM.txt',header = FALSE)
+ying_expression<-fread('./brain_development_RPKM.txt',header = FALSE)
 ying_id<-ying_expression$V1%>%as.matrix()
 ying_id<-apply(ying_id, 1, function(x){
   x<-str_split(x,'[|]')%>%unlist()
@@ -23,7 +23,7 @@ ying_new_data<-data.frame(data=ying_expression,symbol=ying_id)
 ying_new_data<-ying_new_data[!duplicated(ying_new_data$symbol),]
 rownames(ying_new_data)<-ying_new_data$symbol
 ying_new_data<-ying_new_data[,-ncol(ying_new_data)]
-sampple_infpr<-read.csv('F:/复旦/合作/yang/promoter_expression/RNA-sample.csv',header = TRUE)
+sampple_infpr<-read.csv('./promoter_expression/RNA-sample.csv',header = TRUE)
 colnames(ying_new_data)<-sampple_infpr$Sample
 ## Chosing the human  samples   ##
 human_sample<-sampple_infpr[which(sampple_infpr$Species=='Human'),]##460  sample #
@@ -41,15 +41,6 @@ get_normalize_expression<-function(ying_new_data,sample_list,species){
   ying_new_data_scale<-as.matrix(ying_new_data_c)
   rownames(ying_new_data_scale)<-rownames(ying_new_data_c)
   colnames(ying_new_data_scale)<-colnames(ying_new_data_c)
-  ##MAG gene and BAG gene ##
- # ying_bag_scale<-ying_new_data_scale[intersect(bag_gene,rownames(ying_new_data_scale)),]%>%as.data.frame()
- # ying_mag_scale<-ying_new_data_scale[intersect(mag_gene_sym,rownames(ying_new_data_scale)),]%>%as.data.frame()
-  ###
-  # ying_bag_scale<-gather(ying_bag_scale,name,value,1:ncol(ying_bag_scale))
-  # ying_mag_scale<-gather(ying_mag_scale,name,value,1:ncol(ying_mag_scale))
-  # list_data<-list()
-  # list_data[[1]]<-ying_bag_scale
-  # list_data[[2]]<-ying_mag_scale
   ###
   return(ying_new_data_scale)
 }
@@ -527,7 +518,7 @@ plot_traj_data$Period<-factor(as.character(plot_traj_data$Period),levels=unique(
 #plot_traj_data_data<-plot_traj_data[which(plot_traj_data$Group=='MAG'),]
 p<-ggboxplot(plot_traj_data, x="Period", y="Expression",fill='Group',
              
-             palette = "npg", #杂志nature的配色
+             palette = "npg", #
              
              sort.val = "desc", #下降排序 
              outlier.colour = NA,
@@ -611,9 +602,8 @@ all_compare_data$values<-abs(all_compare_data$values)
 all_compare_data$regions<-factor(all_compare_data$regions,levels =unique(all_compare_data$regions))
 ggboxplot(all_compare_data, x="regions", y="values",fill='label',
           
-          palette = "npg", #杂志nature的配色
-          
-          sort.val = "desc", #下降排序
+          palette = "npg", #
+          sort.val = "desc", #
           outlier.colour = NA,
           x.text.angle=60)+stat_compare_means(aes(group = label), label = "p.signif",hide.ns = TRUE)+
   ggtitle('After_born')

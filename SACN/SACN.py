@@ -7,26 +7,9 @@ from torch.autograd import Function
 from typing import Optional, Any, Tuple
 
 logger = logging.getLogger(__name__)
-class SPPModule(nn.Module):
-    def __init__(self, pool_mode='avg', sizes=(1, 2, 3, 6)):
-        super().__init__()
-        if pool_mode == 'avg':
-            pool_layer = nn.AdaptiveAvgPool3d
-        elif pool_mode == 'max':
-            pool_layer = nn.AdaptiveMaxPool3d
-        else:
-            raise NotImplementedError
 
-        self.pool_blocks = nn.ModuleList([
-            nn.Sequential(pool_layer(size), nn.Flatten()) for size in sizes
-        ])
 
-    def forward(self, x):
-        xs = [block(x) for block in self.pool_blocks]
-        x = torch.cat(xs, dim=1)
-        x = x.view(x.size(0), x.size(1),1, 1, 1)
-       # print(x.shape)
-        return x
+
 class ChannelSELayer3D(nn.Module):
     """
     3D extension of Squeeze-and-Excitation (SE) block described in:
@@ -65,6 +48,9 @@ class ChannelSELayer3D(nn.Module):
 
         return output_tensor
 
+
+
+
 class GradReverse(torch.autograd.Function):
     """
     Extension of grad reverse layer
@@ -82,45 +68,11 @@ class GradReverse(torch.autograd.Function):
 
     def grad_reverse(x, constant):
         return GradReverse.apply(x, constant)
-##attention model ##
-class AttentionModule(nn.Module):
-    def __init__(self, channels=512, reduction=16):
-        super(AttentionModule, self).__init__()
-        kernel_size = 7
-        pool_size = (1,2,3)
-        self.avg_spp = SPPModule('avg', pool_size)
-        self.max_spp = SPPModule('max', pool_size)
-        self.spatial = nn.Sequential(
-            nn.Conv3d(2, 1, kernel_size=kernel_size, stride=1, padding=(kernel_size - 1) // 2,
-                      dilation=1, groups=1, bias=False),
-            nn.BatchNorm3d(1, eps=1e-5, momentum=0.01, affine=True),
-            nn.Sigmoid()
-        )
 
-        _channels = channels * int(sum([x ** 3 for x in pool_size]))
-        self.channel = nn.Sequential(
-            nn.Conv3d(_channels, _channels // reduction, kernel_size=1, padding=0),
-            nn.ReLU(inplace=True),
-            nn.Conv3d(_channels // reduction, channels, kernel_size=1, padding=0),
-            nn.BatchNorm3d(channels, eps=1e-5, momentum=0.01, affine=True),
-            nn.Sigmoid()
-        )
 
-    def forward(self, x):
-        channel_input = self.avg_spp(x) + self.max_spp(x)
-       # print(channel_input)
-        channel_scale = self.channel(channel_input)
-
-        spatial_input = torch.cat((torch.max(x, 1)[0].unsqueeze(1), torch.mean(x, 1).unsqueeze(1)), dim=1)
-        spatial_scale = self.spatial(spatial_input)
-
-        x_age = (x * channel_scale + x * spatial_scale) * 0.5
-
-        return x_age
 
 
 ## SE BLOCK #
-
 class Encoder(nn.Module):
     # 32, 64, 128, 256, 256, 128
     def __init__(self, channel_number=[32, 64, 128, 256,256,128], dropout=True):
@@ -154,8 +106,7 @@ class Encoder(nn.Module):
                 nn.Conv3d(in_channel, out_channel, padding=padding, kernel_size=kernel_size),
                 nn.BatchNorm3d(out_channel),
                 nn.MaxPool3d(2, stride=maxpool_stride),
-                nn.ReLU(),
-                ChannelSELayer3D(out_channel)
+                nn.ReLU()
 
             )
         else:
@@ -163,7 +114,6 @@ class Encoder(nn.Module):
                 nn.Conv3d(in_channel, out_channel, padding=padding, kernel_size=kernel_size),
                 nn.BatchNorm3d(out_channel),
                 nn.ReLU(),
-               # ChannelSELayer3D(out_channel)
             )
         return layer
 
@@ -186,11 +136,13 @@ class Age_regression(nn.Module):
         in_channel = channel_number[-1]
         self.age_regression.add_module('conv_%d' % i,
                                    nn.Conv3d(in_channel,output_dim, padding=0, kernel_size=1))
+        self.agemae=Age_mae()
 
     def forward(self, x):
         x_out = self.age_regression(x)
+        y=self.agemae(x)
         x = F.log_softmax(x_out, dim=1)
-        return x
+        return x,y
 class Age_mae(nn.Module):
     def __init__(self):
         super(Age_mae,self).__init__()
