@@ -96,7 +96,7 @@ def main(root_dir, network_type, con_st,DOMAIN_L,model_name,base,epoches,batch_s
             best_model_domain = copy.deepcopy(models['domain_predictor'])
 
     print("save model")
-    save_model(con_st, best_model_fea, best_model_just,model_name,network_type,base)
+    save_model(best_model_fea, best_model_just,model_name,network_type,base)
     model={'feature_extractor':best_model_fea,
            "age_predictor":best_model_just,
            "domain_predictor":best_model_domain}
@@ -104,7 +104,7 @@ def main(root_dir, network_type, con_st,DOMAIN_L,model_name,base,epoches,batch_s
     print(loss)
     return loss
 
-def save_model(con_st, best_model_fea, best_model_just,model_name,network_type,base):
+def save_model(best_model_fea, best_model_just,model_name,network_type,base):
         
         torch.save(best_model_fea.state_dict(), os.path.join(MODEL_PATH,model_name+str(base)+str(con_st)+str(network_type)+'_encoder'))
         torch.save(best_model_just.state_dict(), os.path.join(MODEL_PATH,model_name+str(base)+str(con_st)+str(network_type)+'age_predictor'))
