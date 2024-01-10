@@ -106,8 +106,8 @@ def main(root_dir, network_type, con_st,DOMAIN_L,model_name,base,epoches,batch_s
 
 def save_model(best_model_fea, best_model_just,model_name,network_type,base):
         
-        torch.save(best_model_fea.state_dict(), os.path.join(MODEL_PATH,model_name+str(base)+str(con_st)+str(network_type)+'_encoder'))
-        torch.save(best_model_just.state_dict(), os.path.join(MODEL_PATH,model_name+str(base)+str(con_st)+str(network_type)+'age_predictor'))
+        torch.save(best_model_fea.state_dict(), os.path.join(MODEL_PATH,model_name+str(base)+str(network_type)+'_encoder'))
+        torch.save(best_model_just.state_dict(), os.path.join(MODEL_PATH,model_name+str(base)+str(network_type)+'age_predictor'))
 
 
 if __name__ == '__main__':
@@ -125,5 +125,5 @@ if __name__ == '__main__':
     theTime = datetime.datetime.now().strftime(ISOTIMEFORMAT)
     os.environ["CUDA_VISIBLE_DEVICES"] = '4'
     
-    tem_res=main(root_dir=args.root_dir, network_type=args.network_type,con_st=1,DOMAIN_L=0.6,model_name=theTime+args.model_name,base=args.base,epoches=args.epochs,batch_size=args.batch_size,lr=args.lr)
+    tem_res=main(root_dir=args.root_dir, network_type=args.network_type,con_st=1,DOMAIN_L=1,model_name=theTime+args.model_name,base=args.base,epoches=args.epochs,batch_size=args.batch_size,lr=args.lr)
 
