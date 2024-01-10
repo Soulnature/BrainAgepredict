@@ -1,4 +1,4 @@
-## Induction
+## Introduction
 The code is used for the work of “Deciphering genetic architecture of brain age gap”.
 This code includes two parts， the first part is the SACN model, and the second part is the analysis process for the BAG GWAS.
 
@@ -21,13 +21,13 @@ python main.py --root_dir /public/home/zhaoxz/reCOns/full_age1.csv --network_typ
 ### Analysis
 - PRS.R. the PGS analysis of different phenotypes, and association with BAG
 - MR_plot.R, the plot for the MR result
-- Expression_analysis.R. The expression analysis of BAG-related gene
+- Expression_analysis.R, the expression analysis of BAG-related gene
 - AD_methylation.R, the process of methylation data on ADNI
-- TRN_bag.R. the associated analysis of BAG-related gene and MAG-related gene in brain TRN.
-- TRN_aging.R. the association between BAG and aging-related pathway
-- Disorder_common.R.  the pleiotropy of BAG-related gene in diverse brain disorders
-- PPI.R. the PPI analysis of BAG-related gene
-- cell_type.R the code for cell type analysis
+- TRN_bag.R, the associated analysis of BAG-related gene and MAG-related gene in brain TRN.
+- TRN_aging.R, the association between BAG and aging-related pathway
+- Disorder_common.R,  the pleiotropy of BAG-related gene in diverse brain disorders
+- PPI.R, the PPI analysis of BAG-related gene
+- cell_type.R, the code for cell type analysis
 
 ## Contact information
 if you have any questions about this code, please contact the author (18210850006@fudan.edu.cn)
