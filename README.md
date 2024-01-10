@@ -1,6 +1,6 @@
 ## Introduction
 The code is used for the work of “Deciphering genetic architecture of brain age gap”.
-This code includes two parts， the first part is the SACN model, and the second part is the analysis process for the BAG GWAS.
+This code includes two parts, the first part is the SACN model, and the second part is the analysis process for the BAG GWAS.
 
 ### SACN model 
 The code for the SACN model, training process, and evaluation process.
