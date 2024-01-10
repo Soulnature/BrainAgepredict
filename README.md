@@ -1,5 +1,5 @@
 ## Induction
-The code is used for the work of “Deciphering genetic architecture of brain age gap with functional genomic analysis”.
+The code is used for the work of “Deciphering genetic architecture of brain age gap”.
 This code include two parts，the first part is the SACN model, and second part is the analysis process for the BAG GWAS.
 
 ### SACN mode 
