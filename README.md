@@ -2,13 +2,15 @@
 The code is used for the work of “Deciphering genetic architecture of brain age gap”.
 This code include two parts，the first part is the SACN model, and second part is the analysis process for the BAG GWAS.
 
-### SACN mode 
+### SACN model 
 The code for the SACN model, train process and evalution process.
 - SACN.py, Resnet.py. the network architecture of SACN and resnet
 - Evalation.py, the evalution process for SACN
 - fune_tune.py, transfer the pretrained  network to the UKB biobank
 - train_c.py, the train and test process
 - main.py, the main process for paramater modify
+- requirements.txt the environment required to run this model
+
 
 You can run  following command to start the train process
 ```python

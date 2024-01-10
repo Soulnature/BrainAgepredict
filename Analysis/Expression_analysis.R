@@ -1,72 +1,83 @@
 #########  the gene expression in brain  ##
+# Load required libraries
 library(tidyverse)
-library(tidyr)
 library(data.table)
-library(ggpubr)
 library(preprocessCore)
-library(export)
-library(stringi)
-library(stringr)
+library(ggpubr)
 library(RColorBrewer)
-ying_expression<-fread('./brain_development_RPKM.txt',header = FALSE)
-ying_id<-ying_expression$V1%>%as.matrix()
-ying_id<-apply(ying_id, 1, function(x){
-  x<-str_split(x,'[|]')%>%unlist()
-  return(x[2])
-})
-## Read the bag gene and mag gene ##
-bag_gene<-fread('./10.17/bag_all_gene.txt',sep = '\t',header = FALSE)
-mag_gene<-fread('mag_gene_list.txt',header = FALSE,sep = '\t')
-#ying_expression<-ying_expression[,-1]
-#
-ying_new_data<-data.frame(data=ying_expression,symbol=ying_id)
-ying_new_data<-ying_new_data[!duplicated(ying_new_data$symbol),]
-rownames(ying_new_data)<-ying_new_data$symbol
-ying_new_data<-ying_new_data[,-ncol(ying_new_data)]
-sampple_infpr<-read.csv('./promoter_expression/RNA-sample.csv',header = TRUE)
-colnames(ying_new_data)<-sampple_infpr$Sample
-## Chosing the human  samples   ##
-human_sample<-sampple_infpr[which(sampple_infpr$Species=='Human'),]##460  sample #
-Macaque_sample<-sampple_infpr[which(sampple_infpr$Species=='Macaque'),]
-###
-get_normalize_expression<-function(ying_new_data,sample_list,species){ 
-  # sample_list<-human_sample
 
-  ying_new_data_c<-ying_new_data[,sample_list$Sample]
-  if(species=='Macaque'){
-    ying_new_data_c<-ying_new_data_c[,-1]
-  }
-  #ying_new_data<-as.numeric(as.matrix(ying_new_data))
-  ying_new_data_scale<-normalize.quantiles(as.matrix(ying_new_data_c))
-  ying_new_data_scale<-as.matrix(ying_new_data_c)
-  rownames(ying_new_data_scale)<-rownames(ying_new_data_c)
-  colnames(ying_new_data_scale)<-colnames(ying_new_data_c)
-  ###
-  return(ying_new_data_scale)
+# Define a function to read and preprocess expression data
+preprocess_expression <- function(file_path, gene_files, sample_info_path) {
+  # Read expression data
+  expression <- fread(file_path, header = FALSE)
+  # Extract gene IDs and clean up
+  gene_ids <- expression$V1 %>% str_split('[|]') %>% map_chr(2)
+  # Join expression data with gene IDs
+  expression <- expression %>%
+    select(-V1) %>%
+    mutate(symbol = gene_ids) %>%
+    distinct(symbol, .keep_all = TRUE)
+  rownames(expression) <- expression$symbol
+  expression <- select(expression, -symbol)
+  
+  # Read sample information
+  sample_info <- read.csv(sample_info_path, header = TRUE)
+  colnames(expression) <- sample_info$Sample
+  
+  # Read gene lists
+  bag_gene <- fread(gene_files$bag, sep = '\t', header = FALSE)
+  mag_gene <- fread(gene_files$mag, sep = '\t', header = FALSE)
+  
+  list(expression = expression, bag_gene = bag_gene, mag_gene = mag_gene, sample_info = sample_info)
 }
-human_expression<-get_normalize_expression(ying_new_data,human_sample,'Human')
-Macaque_expression<-get_normalize_expression(ying_new_data,Macaque_sample,'Macaque')
-####
-human_expression_mean<-human_expression[intersect(rownames(human_expression),bag_gene$V1),]
-Macaque_expression_mean<-Macaque_expression[intersect(rownames(Macaque_expression),bag_gene$V1),]
-human_expression_mean<-apply(human_expression_mean, 1, median)
-Macaque_expression_mean<-apply(Macaque_expression_mean, 1, median)
-####
+
+# Define a function to normalize expression data
+normalize_expression <- function(expression_data, sample_list, species) {
+  sub_data <- expression_data[, sample_list$Sample, with = FALSE]
+  sub_data <- as.matrix(sub_data)
+  if (species == 'Macaque') {
+    sub_data <- sub_data[, -1]
+  }
+  normalized_data <- normalize.quantiles(sub_data)
+  colnames(normalized_data) <- colnames(sub_data)
+  rownames(normalized_data) <- rownames(sub_data)
+  normalized_data
+}
+
+# Define a function to plot expression data
+plot_expression <- function(expression_data, gene_list, sample_periods, title) {
+  expression_mean <- expression_data[intersect(rownames(expression_data), gene_list$V1),]
+  expression_mean <- apply(expression_mean, 1, median)
+  boxplot(expression_mean, main = title)
+}
+
+# Preprocess the data
+data_files <- list(
+  expression = './brain_development_RPKM.txt',
+  bag = './10.17/bag_all_gene.txt',
+  mag = 'mag_gene_list.txt'
+)
+sample_info_file <- './promoter_expression/RNA-sample.csv'
+data <- preprocess_expression(data_files$expression, data_files, sample_info_file)
+
+# Normalize expression data for human and macaque samples
+human_expression <- normalize_expression(data$expression, data$sample_info[data$sample_info$Species == 'Human',], 'Human')
+macaque_expression <- normalize_expression(data$expression, data$sample_info[data$sample_info$Species == 'Macaque',], 'Macaque')
+
+# Plot expression data
+plot_expression(human_expression, data$bag_gene, data$sample_info[data$sample_info$Species == 'Human',], 'Human BAG Gene Expression')
+plot_expression(macaque_expression, data$bag_gene, data$sample_info[data$sample_info$Species == 'Macaque',], 'Macaque BAG Gene Expression')
+
 boxplot(Macaque_expression_mean,Macaque_expression_mean)
 RUNX2_exp_fea<-human_expression['KLF3',fetal_period$Sample]
 RUNX2_exp_new<-human_expression['KLF3',newborn_period$Sample]
 RUNX2_exp_adult<-human_expression['KLF3',adult_period$Sample]
 ##
-mean(RUNX2_exp_new)
-mean(RUNX2_exp_adult)
 
 ##
 
-
-## 
 plot_df<-data.frame(exp=c(RUNX2_exp_new,RUNX2_exp_adult),group_d=c(rep('young',length(RUNX2_exp_new)),rep('older',length(RUNX2_exp_adult))))
 #
-plot_df<-plot_df[which(plot_df$exp<=5),]
 ##
 plot_df[which(plot_df$group_d=='young'),1]%>%mean()
 plot_df[which(plot_df$group_d=='older'),1]%>%mean()
@@ -106,9 +117,6 @@ newborn_period<-pfc_example[which(pfc_example$Period>7&pfc_example$Period<=11),]
 adult_period<-pfc_example[which(pfc_example$Period>11&pfc_example$Period<14),]
 chosing_region<-Reduce(intersect,list(fetal_period$Region,newborn_period$Region,adult_period$Region))
 ###
-
-
-###
 get_region_expression<-function(value_expression,period_sample,sample_name){
   period_sub<-value_expression[,period_sample$Sample]
   period_sub_mean<-apply(period_sub, 1, function(x){
@@ -123,11 +131,7 @@ newborn_exp<-get_region_expression(brain_expression,newborn_period,chosing_regio
 adult_exp<-get_region_expression(brain_expression,adult_period,chosing_region)%>%as.vector()
 ##
 plot_module<-rbind(fetal_exp,newborn_exp,adult_exp)
-pheatmap(t(fetal_exp),scale ='row' )
-pheatmap(t(newborn_exp),scale ='row')
-pheatmap(t(adult_exp),scale ='row')
 
-####
 pheatmap(brain_expression,color = colorRampPalette(c("blue", "white", "red"))(20),cluster_cols = FALSE,
          cluster_rows = FALSE,scale = 'row')
 graph2ppt(file='coexpression_data',width=8,height=6,append=TRUE)
@@ -242,14 +246,6 @@ ggboxplot(cor_df,x='region_name',y='cor_index',fill ='period_label_cor',outlier.
 + stat_compare_means(aes(group = period_label_cor),label = "p.signif")+ylab('Coexpression coefficient')
 
 boxplot(fetal_exp_cor$cor_index,newborn_exp_cor$cor_index,adult_exp_cor$cor_index)
-#################
-
-
-
-
-
-
-
 
 ### Compare the expression in cortex and subcortical regions ##
 get_region_difference<-function(bag_cortex,structure_name){
@@ -290,8 +286,7 @@ get_region_difference<-function(bag_cortex,structure_name){
   }
 ####
   
-  ####
-  ##
+
   # contaion_df<-contaion_df[which(contaion_df$Expression!=0),]
   plot_df_all<-plot_df_all[-1,]
   plt<-ggboxplot(plot_df_all,x='label',y='Expression',fill = 'region',)+stat_compare_means()
@@ -307,9 +302,6 @@ subcor_df<-get_region_difference(ying_new_data_brain_bag_nocortex,'subcortex')
 label_name<-c(rep('cortex',nrow(cortex_df)),rep('sub_cortical',nrow(subcor_df)))
 diff_cor_df<-cbind(rbind(cortex_df,subcor_df),label_name)
 ggviolin(diff_cor_df,x='label_name',y='Expression',fill = 'label',palette ='jco' )+stat_compare_means(aes(group = label),label = "p.format")
-
-
-
 
 
 #### BAG and MAG co-expression ########
@@ -427,9 +419,6 @@ ggboxplot(contaion_df,x='Brain_region',y='Expression',fill = 'grey')+stat_compar
 
 
 
-
-
-
 ### dynamic expression -- cortex vs no cortex #
 trajectory<-function(expression_data,exp_sample){
   
@@ -489,134 +478,6 @@ p = ggplot(data = deviates, aes(x = month)) +
         axis.title.x = element_text(size = 11),
         axis.title.y = element_blank()
   )
-
-
-
-
-
-###
-### co-expression values ##
-#bag_gene<-setdiff(bag_gene$SYMBO,gene_cpg_tar$V1)
-MAG_expression<-ying_new_data_brain[intersect(gene_cpg_tar$V1,rownames(ying_new_data_brain)),]
-BAG_expression<-ying_new_data_brain[intersect(bag_gene$SYMBOL,rownames(ying_new_data_brain)),]
-####
-all_two_type<-rbind(MAG_expression,BAG_expression)
-exp_cor<-cor(t(all_two_type))
-#####
-expression_net<-exp_cor[intersect(gene_cpg_tar$V1,rownames(ying_new_data_brain)),intersect(bag_gene,rownames(ying_new_data_brain))]
-expression_net_abs<-abs(expression_net)
-##### corNet ##
-expression_net_mean<-apply(expression_net_abs, 1, mean)
-boxplot(expression_net_mean)
-
-pfc_example1<-pfc_example
-pfc_example<-pfc_example1[which(pfc_example1$Period>=8),]
-
-#########################
-plot_traj_data<-data.frame(Period=sample_label,Expression=expression_value_all,Group=group_label)
-plot_traj_data$Period<-factor(as.character(plot_traj_data$Period),levels=unique(plot_traj_data$Period))
-#plot_traj_data_data<-plot_traj_data[which(plot_traj_data$Group=='MAG'),]
-p<-ggboxplot(plot_traj_data, x="Period", y="Expression",fill='Group',
-             
-             palette = "npg", #
-             
-             sort.val = "desc", #下降排序 
-             outlier.colour = NA,
-             x.text.angle=60)+stat_compare_means(aes(group = Group), label = "p.signif",hide.ns = TRUE)
-ggtitle('After_born')
-
-print(p)
-
-#### 
-expression_tr(ying_new_data_brain,bag_gene,'BAG')
-###  the all gene and eight gene   ###
-chromatin_gene<-read.table('./brain_age/genes.txt',header = TRUE)
-write.table(bag_gene$SYMBOL,'bag_gene_magma.txt',row.names = FALSE,col.names = FALSE,quote = FALSE)
-######### global  expression #########
-bag_gene<-intersect(bag_gene$SYMBOL,rownames(ying_new_data_brain))
-mag_gene<-rownames(MAG_expression)
-other_gene_data<-setdiff(rownames(ying_new_data_brain),union(bag_gene,mag_gene))
-
-### Compute the co-expression network  ###
-exp_all_data<-function(expressin_1,expression_2){
-  # expressin_1<-bag_tem_expre
-  # expression_2<-mag_tem_expre
-  expressin_1<-expressin_1[!as.logical(rowSums(expressin_1==0)), ]
-  expression_2<- expression_2[!as.logical(rowSums(expression_2==0)), ]
-  co_expre_vec<-c()
-  # expressin_1_mean<-apply(expressin_1, 2, mean)
-  #expression_2_mean<-apply(expression_2, 2, mean)
-  #co_expre_vec<-c(co_expre_vec,cor(expressin_1_mean,expression_2_mean))
-  for (i in c(1:nrow(expressin_1))) {
-    
-    single_gene<-c()
-    for (j in c(1:nrow(expression_2))) {
-      temp_cor<-cor(expressin_1[i,],expression_2[j,],method = 'pearson')
-      single_gene<-c(single_gene,temp_cor)
-    }
-    co_expre_vec<-c(co_expre_vec,single_gene)
-  }
-  return(co_expre_vec)
-}
-### pan brain regions ##
-pfc_example_born<-pfc_example[which(pfc_example$Period<=7),]
-all_brain_region<-pfc_example_born$Region%>%unique()
-ying_new_data_brain<-human_expression
-region_cor_data<-function(region_list){
-  cor_coefficient_inner<-vector()
-  cor_coefficient_outsite<-vector()
-  inner_label<-c()
-  out_lable<-c()
-  # region_list<-all_brain_region
-  for (i in region_list) {
-    # i=all_brain_region[10]
-    print(i)
-    temp_sample<-pfc_example_born[which(pfc_example_born$Region==i),1]
-    if(length(temp_sample)>3){
-      bag_tem_expre<-ying_new_data_brain[intersect(bag_gene$V1,temp_sample)]
-      mag_tem_expre<-ying_new_data_brain[mag_gene$V1,temp_sample]
-      other_tem_expre<-ying_new_data_brain[other_gene_data,temp_sample]
-      co_exp_inner<-exp_all_data(bag_tem_expre,mag_tem_expre)
-      co_exp_outside<-exp_all_data(bag_tem_expre,other_tem_expre)
-      print(median(co_exp_inner))
-      print(median(co_exp_outside))
-      boxplot(co_exp_inner,co_exp_outside)
-      cor_coefficient_inner<-c(cor_coefficient_inner,co_exp_inner)
-      inner_label<-c(inner_label,rep(i,length(co_exp_inner)))
-      out_lable<-c(out_lable,rep(i,length(co_exp_outside)))
-      cor_coefficient_outsite<-c(cor_coefficient_outsite,co_exp_outside)
-    }
-  }
-  efficient_label_data<-c(rep('inner',length(cor_coefficient_inner)),rep('Out',length(cor_coefficient_outsite)))
-  efficient_value<-c(cor_coefficient_inner,cor_coefficient_outsite)
-  efficient_regions<-c(inner_label,out_lable)
-  combine_data<-data.frame(label=efficient_label_data,values=efficient_value,regions=efficient_regions)
-  return(combine_data)
-}
-
-#### gene data #
-all_compare_data<-region_cor_data(all_brain_region)
-colnames(all_compare_data)
-all_compare_data$values<-abs(all_compare_data$values)
-#
-all_compare_data$regions<-factor(all_compare_data$regions,levels =unique(all_compare_data$regions))
-ggboxplot(all_compare_data, x="regions", y="values",fill='label',
-          
-          palette = "npg", #
-          sort.val = "desc", #
-          outlier.colour = NA,
-          x.text.angle=60)+stat_compare_means(aes(group = label), label = "p.signif",hide.ns = TRUE)+
-  ggtitle('After_born')
-
-graph2ppt(file='coexpression_data',width=8,height=6,append=TRUE)
-###
-all_compare_data$values<-abs(all_compare_data$values)
-###
-####
-WGCNA_adult_data<-human_expression[,which(pfc_example$Period>11)]
-##
-#####
-
 
 
 
@@ -727,15 +588,12 @@ trajetory_cell_tyep$period<-apply(as.matrix(trajetory_cell_tyep$period), 1,funct
 trajetory_cell_tyep<-na.omit(trajetory_cell_tyep)
 trajetory_cell_tyep$period<-as.numeric(trajetory_cell_tyep$period)
 trajetory_cell_tyep<-trajetory_cell_tyep[which(trajetory_cell_tyep$period>11),]
-#trajetory_cell_tyep[which(trajetory_cell_tyep$period==14),2]<-13
-#trajetory_cell_tyep[which(trajetory_cell_tyep$period==15),2]<-14
-#trajetory_cell_tyep$period<-factor(trajetory_cell_tyep$period)
 ggplot(data=trajetory_cell_tyep, 
        aes(x=period, y=exp, group=group, color=factor(group),
            fill=factor(group)))+ geom_smooth(method='loess')+theme_bw()+
   theme(panel.grid =element_blank())+
   # theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))+
-  theme(panel.border = element_blank()) +   ## 删去外层边框
+  theme(panel.border = element_blank()) +   ## 
   theme(axis.line = element_line(size=1, colour = "black"))+
   xlab('periods') +ylab("Normalizated expression")
 +
@@ -744,9 +602,6 @@ ggplot(data=trajetory_cell_tyep,
   +theme_bw()+theme(panel.grid=element_blank())
 ####
 
-
-
-####
 
 
 
