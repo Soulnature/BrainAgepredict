@@ -8,13 +8,9 @@ The code for the SACN model, training process, and evaluation process.
 - Evalation.py, the evaluation process for SACN
 - fune_tune.py, transfer the pre-trained  network to the UKB biobank
 - train_c.py, the train and test process
-<<<<<<< HEAD
 - disorder_classification.py, adopted the stratified feature to classify the  AD
 - main.py, the main process for paramater modify
-=======
-- main.py, the main process for parameter modify
 - disorder_classification.py, adopted the stratified feature to classify the  AD
->>>>>>> origin/master
 - requirements.txt the environment required to run this model
 
 
