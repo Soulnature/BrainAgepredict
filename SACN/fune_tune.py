@@ -16,7 +16,6 @@ from itertools import chain
 from datetime import datetime
 from  utiles import image_domian_gender,my_KLDivLoss,num2vect
 ### first load the encoder and fine tune the Age regression and age mae ###
-# 加载预训练模型
 torch.multiprocessing.set_sharing_strategy('file_system')
 
 class FineTune:
