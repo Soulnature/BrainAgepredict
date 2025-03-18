@@ -1,5 +1,5 @@
 ## Introduction
-The code is used for the work of “Deciphering genetic architecture of brain age gap”.
+The code is used for the work of “Regulatory genomic circuitry of brain age by integrative functional genomic analyses”.
 This code includes two parts, the first part is the SACN model, and the second part is the analysis process for the BAG GWAS.
 
 ### SACN model 
